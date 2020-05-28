@@ -1,138 +1,179 @@
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Scanner;
+import java.io.*;
+import java.util.*;
 import org.apache.commons.io.FileUtils;
 
+/**
+ * This program is meant for University graders using the Moodle website to intake assignment solutions which have
+ * grader-generated feedback files, unlike overwriting submission files.
+ *
+ * This program works by generating lists for feedback folders and files, matching these to each other, and subsequently
+ * placing the right files into the right folders. By hand, this task usually takes around 15 minutes to complete. With
+ * this program, it's ~20ms. Yes, milliseconds.
+ *
+ * Special thanks:
+ * Apache Commons for creating FileUtils
+ *
+ * WARNING: DEVELOPED FOR NON-COMMERCIAL USE ONLY. CHECK LICENSE FILE FOR MORE DETAILS ON USAGE RIGHTS.
+ *
+ * @author Aaron Shaw
+ * @version 1.0
+ */
 public class GradingAssist {
-    public static void main(String[] args) throws IOException, InterruptedException {
+    /**
+     * calls two subsequent methods that accomplish different tasks:
+     * task A: generate empty folders from the submissions directory
+     * task B: filling the generated folders with the correctly matched feedback files
+     * @param args default parameter
+     */
+    public static void main(String[] args) {
         final String SUBMISSIONS_FOLDER_PATH = generateEmptyFolders();
         fillFeedbackFolders(SUBMISSIONS_FOLDER_PATH);
     }
 
-    private static void fillFeedbackFolders(String submissionsFolderPath) throws IOException, InterruptedException {
+    /**
+     * reads folder names from the submissions folder, then generates empty folders with the SAME names in a new directory - without their contained submissions files
+     * @return full file path of a generated text file containing names of every folder in the submissions folder
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    private static String generateEmptyFolders() {
+        String filePath = null;
+        filePath = getFolderPath("submissions");
+
+        final String FILE_NAME = "folderNames.txt";
+        File folderNamesFile = null;
+        folderNamesFile = generateFile(filePath, FILE_NAME);
+
+        final String DESTINATION_PARENT_FOLDER_PATH = filePath.substring(0, filePath.lastIndexOf('\\'));
+        final String DESTINATION_PARENT_FOLDER_NAME = "Feedback Folders";
+        makeDestinationParentFolder(DESTINATION_PARENT_FOLDER_PATH, DESTINATION_PARENT_FOLDER_NAME);
+
+        final String DESTINATION_FOLDER_PATH = DESTINATION_PARENT_FOLDER_PATH + "\\" + DESTINATION_PARENT_FOLDER_NAME;
+        makeDestinationFolders(folderNamesFile, DESTINATION_FOLDER_PATH);
+
+        return filePath;
+    }
+
+    /**
+     * creates the empty directory parallel to the submissions folder that will contain the generated empty feedback folders
+     * @param folderPath full path of the folder right before the submissions folder
+     * @param folderName name of the folder to be created
+     */
+    private static void makeDestinationParentFolder(String folderPath, String folderName) {
+        File destinationFolder = new File(folderPath + "\\" + folderName);
+        destinationFolder.mkdir();
+    }
+
+    /**
+     * creates the empty feedback folders
+     * @param folderNameSource the file containing the names of the folders to be generated
+     * @param destinationFolderPath the path of the directory that will contain the generated feedback folders
+     * @throws IOException if file unreadable or not found
+     */
+    private static void makeDestinationFolders(File folderNameSource, String destinationFolderPath) {
+        ArrayList<String> destination_folder_names = readFolderNames(folderNameSource);
+        for(int i = 0; i < destination_folder_names.size(); i++) {
+            new File(destinationFolderPath + "\\" + destination_folder_names.get(i)).mkdir();
+        }
+    }
+
+    /**
+     * creates a file containing the names of every single file/folder in the folder specified, in the folder specified - wrap your head around that one :D
+     * @param filePath the path of the directory whose file/folder names are to be read and documented
+     * @param fileName the name of the file in which names of all the files in the folder will be documented
+     * @return the file containing the names of all the files in the folder, and yes, this file shall include it's own name - you needn't worry
+     * @throws IOException if file not found, path incorrect, or missing write perms
+     * @throws InterruptedException if cmd has an issue with the command
+     */
+    private static File generateFile(String filePath, String fileName) {
+        final String COMMAND = "cd \"" + filePath + "\" && dir /B /O:G > \"" + filePath + "\\" +  fileName + "\"";
+        ProcessBuilder builder = new ProcessBuilder("cmd.exe", "/c", COMMAND);
+        builder.redirectErrorStream(true);
+        try {
+            Process p = builder.start();
+            p.waitFor();
+        } catch(IOException e) {
+            System.out.println("Error generating file. Please check read and write permissions for destination folders.");
+            System.exit(0);
+        } catch(InterruptedException e) {
+            System.out.println("Error reading folder names using CMD. Please check read and write permissions along with the matching the formatting of the provided path.");
+            System.exit(0);
+        }
+        return new File(filePath + "\\" + fileName);
+    }
+
+    /**
+     * interacts with you :D to get the path to a specified folder
+     * @param descriptor the description of the specified folder
+     * @return the path of the folder you entered
+     * @throws IOException if there was an error reading the InputStream
+     */
+    private static String getFolderPath(String descriptor) {
+        String folderPath = "?";
+        try {
+            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+            while(folderPath.equals("?")) {
+                System.out.println("Please enter the full path of your " + descriptor + " folder with \\ as delimiter (including drive volume label):");
+                folderPath = br.readLine();
+                if(!validateFolderPath(folderPath)) folderPath = "?";
+            }
+        } catch(IOException e) {
+            System.out.println("Error reading path input, make sure path is represented like this: C:\\some-folder\\some-other-folder");
+            System.exit(0);
+        }
+        return folderPath;
+    }
+
+    /**
+     * validates the folder path you entered for you :D - folder path is invalid if it contains any of the following characters:  < > : " / | ? *
+     * @param folderPath the path to validate
+     * @return true if path is valid, false otherwise
+     */
+    private static boolean validateFolderPath(String folderPath) {
+        if(folderPath == null || folderPath.length() < 5) return false;
+        char[] invalidCharacters = { '<', '>', '\"', '|', '?', '*' };
+        if(!(Character.isUpperCase(folderPath.charAt(0)) && folderPath.substring(1, 3).equals(":\\"))) return false;
+        for(int i = 0; i < invalidCharacters.length; i++)
+            if(folderPath.contains(invalidCharacters[i] + "")) return false;
+        return true;
+    }
+
+    /**
+     * fills created empty feedback folders with correctly matched files
+     * @param submissionsFolderPath the full path to the submissions folder including the drive label and the folder name "submissions"
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    private static void fillFeedbackFolders(String submissionsFolderPath) {
         String fileName = "folderNames.txt";
         File folderNamesFile = new File(submissionsFolderPath + "\\" + fileName);
 
-        ArrayList<String> foldersToFill = new ArrayList<String>();
-        Scanner sc = new Scanner(folderNamesFile);
-        while(sc.hasNextLine()) {
-            String folderToFill = sc.nextLine();
-            if(!folderToFill.contains(".") && folderToFill.contains("_")) foldersToFill.add(folderToFill);
-        }
-        sc.close();
-
-        ArrayList<String>[] folderNames = new ArrayList[foldersToFill.size()];
-        for(int i = 0; i < folderNames.length; i++) {
-            folderNames[i] = new ArrayList<String>();
-            String folderName = foldersToFill.get(i);
-
-            while(folderName.contains(" ")) {
-                int splitIndex = folderName.indexOf(' ');
-                folderNames[i].add(folderName.substring(0, splitIndex));
-                folderName = folderName.substring(splitIndex + 1);
-            }
-            folderNames[i].add(folderName.substring(0, folderName.indexOf('_')));
-        }
+        ArrayList<String> foldersToFill = readFolderNames(folderNamesFile);
+        ArrayList<String>[] folderNames = convertFoldersForMatching(foldersToFill);
 
         final String FEEDBACK_FOLDER_PATH = getFolderPath("feedback files");
         fileName = "fileNames.txt";
         File fileNamesFile = generateFile(FEEDBACK_FOLDER_PATH, fileName);
 
-        ArrayList<String> filesToMove = new ArrayList<String>();
-        sc = new Scanner(fileNamesFile);
-        while(sc.hasNextLine()) {
-            String fileToMove = sc.nextLine();
-            if(!fileToMove.contains("(")) filesToMove.add(fileToMove);
-        }
-        sc.close();
-
-        ArrayList<String>[] fileNames = new ArrayList[filesToMove.size()];
-        for(int i = 0; i < fileNames.length; i++) {
-            fileNames[i] = new ArrayList<String>();
-            String feedbackFileName = filesToMove.get(i);
-            feedbackFileName = feedbackFileName.substring(0, feedbackFileName.indexOf('.'));
-
-            while(feedbackFileName.contains("_")) {
-                int splitIndex = feedbackFileName.indexOf('_');
-                fileNames[i].add(feedbackFileName.substring(0, splitIndex));
-                feedbackFileName = feedbackFileName.substring(splitIndex + 1);
-            }
-            if(feedbackFileName.length() > 1 && !feedbackFileName.contains("(")) fileNames[i].add(feedbackFileName);
-        }
+        ArrayList<String> filesToMove = readFileNames(fileNamesFile);
+        ArrayList<String>[] fileNames = convertFilesForMatching(filesToMove);
 
         boolean[] filesMoved = new boolean[filesToMove.size()];
 
-        //come up with a better system to find matches - preferably scanning across multiple names simultaneously
-        //go through folderNames in outer loop, there are less feedback folders than feedback files
-        //filter by one name, filter by another only if there is more than one match
-        long startTime = System.currentTimeMillis();
-
-        //this is fast
-        /*
-        for(int i = 0; i < folderNames.length; i++) {
-            final String FOLDER_NAME = foldersToFill.get(i);
-            ArrayList<String> folderName = folderNames[i];
-
-            ArrayList<Integer> matches = new ArrayList<Integer>();
-            for(int a = 0; a < fileNames.length; a++) matches.add(a);
-
-            int name = 0;
-            do {
-                matches = filter(filesToMove, matches, folderName.get(name++));
-            } while(matches.size() > 1 && name < folderName.size());
-
-            int numberOfMatches = matches.size();
-            label: switch(numberOfMatches) {
-                case 0 : {
-                    ArrayList<Integer> altMatches = new ArrayList<Integer>();
-                    for(int a = 0; a < fileNames.length; a++) altMatches.add(a);
-
-                    int altName = folderName.size()-1;
-                    do {
-                        altMatches = filter(filesToMove, altMatches, folderName.get(altName--));
-                    } while(altMatches.size() > 1 && altName >= 0);
-
-                    int numberOfAltMatches = altMatches.size();
-                    switch(numberOfAltMatches) {
-                        case 0 : System.out.println("MATCH_NOT_FOUND_ERROR: " + FOLDER_NAME.substring(0, FOLDER_NAME.indexOf('_')));
-                            break label;
-                        case 1 : {
-                            //move feedback file with name = FEEDBACK_FOLDER_PATH + "\\" + filesToMove.get(matches.get(0)) into folder with name = FEEDBACK_FOLDER_PATH + foldersToFill.get(i)
-                            final String FILE_NAME = filesToMove.get(altMatches.get(0));
-                            moveFile(FILE_NAME, FOLDER_NAME, FEEDBACK_FOLDER_PATH, submissionsFolderPath);
-                        }
-                            break label;
-                    }
-                }
-                default : System.out.println("TOO_MANY_MATCHES_FOUND_ERROR: " + FOLDER_NAME.substring(0, FOLDER_NAME.indexOf('_')));
-                    break;
-                case 1 : {
-                    //move feedback file with name = FEEDBACK_FOLDER_PATH + "\\" + filesToMove.get(matches.get(0)) into folder with name = FEEDBACK_FOLDER_PATH + foldersToFill.get(i)
-                    final String FILE_NAME = filesToMove.get(matches.get(0));
-                    moveFile(FILE_NAME, FOLDER_NAME, FEEDBACK_FOLDER_PATH, submissionsFolderPath);
-                }
-                    break;
-            }
-        }*/
-
-        //this is correct
-        /*
         for(int i = 0; i < folderNames.length; i++) {
             final String FOLDER_NAME = foldersToFill.get(i);
             ArrayList<String> folderName = folderNames[i];
             int numberOfNames = folderName.size();
             ArrayList<Integer>[] matches = new ArrayList[numberOfNames];
 
-            System.out.println(i + ": " + FOLDER_NAME);
-
+            //if the number of matches reduces, that means there may still be more than one name to check
             int numberOfMatches = 0;
             for(int j = 0; j < numberOfNames; j++) {
                 matches[j] = initializeMatches(filesMoved);
                 int divisionFactor;
                 do {
                     int oldSize = matches[j].size();
-                    matches[j] = filter(filesToMove, matches[j], folderName.get(j));
+                    matches[j] = filter(fileNames, matches[j], folderName.get(j));
                     divisionFactor = oldSize - matches[j].size();
                 } while(divisionFactor > 0);
                 numberOfMatches += matches[j].size();
@@ -141,15 +182,13 @@ public class GradingAssist {
             if(numberOfMatches == 0)
                 System.out.println("MATCH_NOT_FOUND_ERROR: " + FOLDER_NAME.substring(0, FOLDER_NAME.indexOf('_')));
             else {
-                System.out.println(i + ": 2");
                 int maxScoreMatch = -1;
-                Map<Integer, Integer> matchesScore = new HashMap<Integer, Integer>();
+                Map<Integer, Integer> matchesScore = new HashMap<>();
                 int x = 0;
                 while(maxScoreMatch == -1) {
                     maxScoreMatch = matches[x].size() > 0 ? matches[x].get(0) : maxScoreMatch;
                     x++;
                 }
-                System.out.println(i + ": 3");
                 for(ArrayList<Integer> nameMatch : matches) {
                     for(int j = 0; j < nameMatch.size(); j++) {
                         int key = nameMatch.get(j);
@@ -166,121 +205,173 @@ public class GradingAssist {
                 final String FILE_NAME = filesToMove.get(maxScoreMatch);
                 moveFile(FILE_NAME, FOLDER_NAME, FEEDBACK_FOLDER_PATH, submissionsFolderPath);
             }
-        }*/
+        }
 
-        long endTime = System.currentTimeMillis();
-        System.out.println("Time: " + (endTime - startTime) + " ms");
-
-        folderNamesFile.delete();
-        fileNamesFile.delete();
-
-        //maybe an attempt for another time
-        /*for(int m = 0; m < numberOfMatches; m++) {
-            int minimumMatchIndex = 0;
-            for(int n = 1; n < matches.length; n++) {
-                int currentMatch = matches[n].get(0), minimumWatch = matches[minimumMatchIndex].get(0);
-                if(currentMatch < minimumWatch) minimumMatchIndex = n;
-                else if(currentMatch == minimumWatch)
-            }
-
-        }*/
+        deleteFiles(folderNamesFile, fileNamesFile);
     }
 
+    private static void deleteFiles(File folderNamesFile, File fileNamesFile) {
+        try {
+            FileUtils.forceDelete(folderNamesFile);
+            FileUtils.forceDelete(fileNamesFile);
+        } catch(IOException e) {
+            System.out.println("Error. Cannot delete on or more generated files. I/O Exception thrown.");
+            System.exit(0);
+        }
+    }
+
+    private static void deleteFile(File file) {
+        try {
+            FileUtils.forceDelete(file);
+        } catch(IOException e) {
+            System.out.println("Error. Cannot delete on or more generated files. I/O Exception thrown.");
+            System.exit(0);
+        }
+    }
+
+    /**
+     * creates an ArrayList with all feedback folder names read from a file
+     * @param folderNamesFile the file containing the names of all submission folders
+     * @return an ArrayList containing the names of every feedback folder to be filled
+     * @throws IOException if there was an error reading the file
+     */
+    private static ArrayList<String> readFolderNames(File folderNamesFile) {
+        ArrayList<String> foldersToFill = new ArrayList<>();
+
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(folderNamesFile));
+            String folderToFill = br.readLine();
+            while(folderToFill != null) {
+                if(!folderToFill.contains(".") && folderToFill.contains("_")) foldersToFill.add(folderToFill);
+                folderToFill = br.readLine();
+            }
+            br.close();
+        } catch(IOException e) {
+            System.out.println("Error reading feedback folder names file. Please check read and write permissions for the destination folder.");
+            System.exit(0);
+        } finally {
+            deleteFile(folderNamesFile);
+        }
+
+        return foldersToFill;
+    }
+
+    /**
+     * converts the feedback folder names into delimited ArrayLists for convenient matching
+     * @param foldersToFill the ArrayList containing the names of the feedback folders as solid Strings
+     * @return an array of ArrayLists containing delimited(separated) feedback folder names
+     */
+    private static ArrayList<String>[] convertFoldersForMatching(ArrayList<String> foldersToFill) {
+        ArrayList<String>[] folderNames = new ArrayList[foldersToFill.size()];
+
+        for(int i = 0; i < folderNames.length; i++) {
+            folderNames[i] = new ArrayList<String>();
+            String folderName = foldersToFill.get(i);
+
+            while(folderName.contains(" ")) {
+                int splitIndex = folderName.indexOf(' ');
+                folderNames[i].add(folderName.substring(0, splitIndex));
+                folderName = folderName.substring(splitIndex + 1);
+            }
+            folderNames[i].add(folderName.substring(0, folderName.indexOf('_')));
+        }
+
+        return folderNames;
+    }
+
+    /**
+     * creates an ArrayList with all feedback file names read from a file
+     * @param fileNamesFile the file containing the names of all feedback files
+     * @return an ArrayList containing the names of every feedback file
+     * @throws IOException if there was an error reading the file
+     */
+    private static ArrayList<String> readFileNames(File fileNamesFile) {
+        ArrayList<String> filesToMove = new ArrayList<>();
+
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(fileNamesFile));
+            String fileToMove = br.readLine();
+            while(fileToMove != null) {
+                if(!fileToMove.contains("(")) filesToMove.add(fileToMove);
+                fileToMove = br.readLine();
+            }
+            br.close();
+        } catch(IOException e) {
+            System.out.println("Error reading feedback folder names file. Please check read and write permissions for the destination folder.");
+            System.exit(0);
+        } finally {
+            deleteFile(fileNamesFile);
+        }
+
+        return filesToMove;
+    }
+
+    /**
+     * converts the feedback file names into delimited ArrayLists for convenient matching
+     * @param filesToMove the ArrayList containing the names of the feedback files as solid Strings
+     * @return an array of ArrayLists containing delimited(separated) feedback file names
+     */
+    private static ArrayList<String>[] convertFilesForMatching(ArrayList<String> filesToMove) {
+        ArrayList<String>[] fileNames = new ArrayList[filesToMove.size()];
+
+        for(int i = 0; i < fileNames.length; i++) {
+            fileNames[i] = new ArrayList<String>();
+            String feedbackFileName = filesToMove.get(i);
+            feedbackFileName = feedbackFileName.substring(0, feedbackFileName.indexOf('.'));
+
+            while(feedbackFileName.contains("_")) {
+                int splitIndex = feedbackFileName.lastIndexOf('_');
+                fileNames[i].add(feedbackFileName.substring(splitIndex + 1));
+                feedbackFileName = feedbackFileName.substring(0, splitIndex);
+            }
+            if(feedbackFileName.length() > 1 && !feedbackFileName.contains("(")) fileNames[i].add(feedbackFileName);
+        }
+
+        return fileNames;
+    }
+
+    /**
+     * initializes the list of unmatched feedback files - this is speed
+     * @param filesMoved information on which feedback files have been matched and moved
+     * @return an ArrayList containing the index numbers of every unmatched feedback file
+     */
     public static ArrayList<Integer> initializeMatches(boolean[] filesMoved) {
         ArrayList<Integer> initializedMatches = new ArrayList<Integer>(filesMoved.length);
         for(int i = 0; i < filesMoved.length; i++) if(!filesMoved[i]) initializedMatches.add(i);
         return initializedMatches;
     }
 
+    /**
+     * moves a feedback file into its corresponding feedback folder once they have been matched
+     * @param fileName the name of the feedback file to move
+     * @param folderName the name of the feedback folder to which the file will be moved
+     * @param feedbackFolderPath the path of the created empty feedback folders
+     * @param submissionsFolderPath the path of the original submissions folder
+     */
     private static void moveFile(String fileName, String folderName, String feedbackFolderPath, String submissionsFolderPath) {
         File feedbackFile = new File(feedbackFolderPath + "\\" + fileName);
-        final String DESTINATION_PARENT_FOLDER_PATH = submissionsFolderPath.substring(0, submissionsFolderPath.lastIndexOf('\\')) + "\\Empty Feedback Folders\\";
+        final String DESTINATION_PARENT_FOLDER_PATH = submissionsFolderPath.substring(0, submissionsFolderPath.lastIndexOf('\\')) + "\\Feedback Folders\\";
         feedbackFile.renameTo(new File(DESTINATION_PARENT_FOLDER_PATH + folderName + "\\" + fileName));
     }
 
-    private static ArrayList<Integer> filter(ArrayList<String> filesToMove, ArrayList<Integer> matches, String folderName) {
+    /**
+     * filters matches using feedback file and folder names
+     * @param fileNames the delimited names of all the feedback files
+     * @param matches the array of currently active matches
+     * @param folderName a part of the name of the folder for which matches are being found
+     * @return the list of corresponding matches
+     */
+    private static ArrayList<Integer> filter(ArrayList<String>[] fileNames, ArrayList<Integer> matches, String folderName) {
         for(int i = 0; i < matches.size(); i++) {
             int indexToCheck = matches.get(i);
-            ArrayList<String> fileName = new ArrayList<String>();
 
-            String feedbackFileName = filesToMove.get(indexToCheck);
-            feedbackFileName = feedbackFileName.substring(0, feedbackFileName.indexOf('.'));
+            ArrayList<String> feedbackFileName = fileNames[indexToCheck];
 
-            while(feedbackFileName.contains("_")) {
-                int splitIndex = feedbackFileName.indexOf('_');
-                fileName.add(feedbackFileName.substring(0, splitIndex));
-                feedbackFileName = feedbackFileName.substring(splitIndex + 1);
-            }
-            if(feedbackFileName.length() > 1 && !feedbackFileName.contains("(")) fileName.add(feedbackFileName);
-
-            if(!fileName.contains(folderName)) {
+            if(!feedbackFileName.contains(folderName)) {
                 matches.remove(i);
                 i--;
             }
         }
         return matches;
-    }
-
-    private static String generateEmptyFolders() throws IOException, InterruptedException {
-        //D:\Documents\Academics\UPEI\Sem 2\Grading CS-1910\Assignment 3\Submissions
-        //D:\Documents\Academics\UPEI\Sem 2\Grading CS-1910\Assignment 3\A3
-        final String FILE_PATH = getFolderPath("submissions");
-        final String FILE_NAME = "folderNames.txt";
-        File folderNamesFile = generateFile(FILE_PATH, FILE_NAME);
-
-        final String DESTINATION_PARENT_FOLDER_PATH = FILE_PATH.substring(0, FILE_PATH.lastIndexOf('\\'));
-        final String DESTINATION_PARENT_FOLDER_NAME = "Empty Feedback Folders";
-        makeDestinationParentFolder(DESTINATION_PARENT_FOLDER_PATH, DESTINATION_PARENT_FOLDER_NAME);
-
-        final String DESTINATION_FOLDER_PATH = DESTINATION_PARENT_FOLDER_PATH + "\\" + DESTINATION_PARENT_FOLDER_NAME;
-        makeDestinationFolders(folderNamesFile, DESTINATION_FOLDER_PATH);
-
-        return FILE_PATH;
-    }
-
-    private static void makeDestinationFolders(File folderNameSource, String destinationFolderPath) throws IOException {
-        Scanner sc = new Scanner(folderNameSource);
-        while(sc.hasNextLine()) {
-            final String DESTINATION_FOLDER_NAME = sc.nextLine();
-            if(!DESTINATION_FOLDER_NAME.contains(".")) new File(destinationFolderPath + "\\" + DESTINATION_FOLDER_NAME).mkdir();
-        }
-        File redundantFolder = new File(destinationFolderPath + "\\" + destinationFolderPath.substring(destinationFolderPath.lastIndexOf('\\')));
-        FileUtils.deleteDirectory(redundantFolder);
-        sc.close();
-    }
-
-    private static void makeDestinationParentFolder(String folderPath, String folderName) {
-        File destinationFolder = new File(folderPath + "\\" + folderName);
-        destinationFolder.mkdir();
-    }
-
-    private static File generateFile(String filePath, String fileName) throws IOException, InterruptedException {
-        String command = "cd \"" + filePath + "\" && dir /B /O:G > \"" + filePath + "\\" +  fileName + "\"";
-        ProcessBuilder builder = new ProcessBuilder("cmd.exe", "/c", command);
-        builder.redirectErrorStream(true);
-        Process p = builder.start();
-        p.waitFor();
-        return new File(filePath + "\\" + fileName);
-    }
-
-    private static String getFolderPath(String descriptor) {
-        String folderPath = "?";
-        Scanner sc = new Scanner(System.in);
-        while(folderPath.equals("?")) {
-            System.out.println("Please enter the full path of your " + descriptor + " folder with \\ as delimiter (including drive volume label):");
-            folderPath = sc.nextLine();
-            if(!validateFilePath(folderPath)) folderPath = "?";
-        }
-        return folderPath;
-    }
-
-    //file path is invalid if it contains <>:"/|?*
-    private static boolean validateFilePath(String filePath) {
-        if(filePath.length() < 5) return false;
-        char[] invalidCharacters = { '<', '>', '\"', '|', '?', '*' };
-        if(!(Character.isUpperCase(filePath.charAt(0)) && filePath.substring(1, 3).equals(":\\"))) return false;
-        for(int i = 0; i < invalidCharacters.length; i++)
-            if(filePath.contains(invalidCharacters[i] + "")) return false;
-        return true;
     }
 }
