@@ -31,4 +31,7 @@ feedback file folder.
     students undoubtedly missing the assignment submission, which makes Moodle not<br>
     generate a submission folder for graders to download.
     
-7. It then cleans up the temporary requirements, such as text files holding all the student feedback folder names and student feedback file names. Graders are encouraged to manually delete these files (in case the program fails to do so) if an exception is encountered during runtime.
+7. It then cleans up the temporary requirements, such as text files holding all the student<br>
+feedback folder names and student feedback file names. Graders are encouraged to<br>
+manually delete these files (in case the program fails to do so) if an exception is<br>
+encountered during runtime.
