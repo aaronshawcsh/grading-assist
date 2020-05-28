@@ -335,7 +335,7 @@ public class GradingAssist {
      * @param filesMoved information on which feedback files have been matched and moved
      * @return an ArrayList containing the index numbers of every unmatched feedback file
      */
-    public static ArrayList<Integer> initializeMatches(boolean[] filesMoved) {
+    private static ArrayList<Integer> initializeMatches(boolean[] filesMoved) {
         ArrayList<Integer> initializedMatches = new ArrayList<Integer>(filesMoved.length);
         for(int i = 0; i < filesMoved.length; i++) if(!filesMoved[i]) initializedMatches.add(i);
         return initializedMatches;
