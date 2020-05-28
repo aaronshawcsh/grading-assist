@@ -1,0 +1,1 @@
+javadoc -author -d "D:\github\grading-assist\docs" -sourcepath "D:\github\grading-assist\src" -classpath "D:\github\grading-assist\lib\commons-io-2.6.jar" GradingAssist.java

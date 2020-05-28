@@ -3,26 +3,26 @@ import java.util.*;
 import org.apache.commons.io.FileUtils;
 
 /**
- * This program is meant for University graders using the Moodle website to intake assignment solutions which have
- * grader-generated feedback files, unlike overwriting submission files.
+ * <p>This program is meant for University graders using the Moodle website to intake assignment solutions which have<br>
+ * grader-generated feedback files, unlike overwriting submission files.</p>
  *
- * This program works by generating lists for feedback folders and files, matching these to each other, and subsequently
- * placing the right files into the right folders. By hand, this task usually takes around 15 minutes to complete. With
- * this program, it's ~20ms. Yes, milliseconds.
+ * <p>This program works by generating lists for feedback folders and files, matching these to each other, and subsequently<br>
+ * placing the right files into the right folders. By hand, this task usually takes around 15 minutes to complete. With<br>
+ * this program, it's ~20ms. Yes, milliseconds.</p>
  *
- * Special thanks:
- * Apache Commons for creating FileUtils
+ * <p>Special thanks:<br>
+ * Apache Commons for creating FileUtils</p>
  *
- * WARNING: DEVELOPED FOR NON-COMMERCIAL USE ONLY. CHECK LICENSE FILE FOR MORE DETAILS ON USAGE RIGHTS.
+ * <p>WARNING: DEVELOPED FOR NON-COMMERCIAL USE ONLY. CHECK LICENSE FILE FOR MORE DETAILS ON USAGE RIGHTS.</p>
  *
  * @author Aaron Shaw
  * @version 1.0
  */
 public class GradingAssist {
     /**
-     * calls two subsequent methods that accomplish different tasks:
-     * task A: generate empty folders from the submissions directory
-     * task B: filling the generated folders with the correctly matched feedback files
+     * <p>calls two subsequent methods that accomplish different tasks:<br>
+     * task A: generate empty folders from the submissions directory<br>
+     * task B: filling the generated folders with the correctly matched feedback files</p>
      * @param args default parameter
      */
     public static void main(String[] args) {
@@ -31,7 +31,7 @@ public class GradingAssist {
     }
 
     /**
-     * reads folder names from the submissions folder, then generates empty folders with the SAME names in a new directory - without their contained submissions files
+     * <p>reads folder names from the submissions folder, then generates empty folders with the SAME names in a new directory - without their contained submissions files</p>
      * @return full file path of a generated text file containing names of every folder in the submissions folder
      */
     public static String generateEmptyFolders() {
@@ -53,7 +53,7 @@ public class GradingAssist {
     }
 
     /**
-     * creates the empty directory parallel to the submissions folder that will contain the generated empty feedback folders
+     * <p>creates the empty directory parallel to the submissions folder that will contain the generated empty feedback folders</p>
      * @param folderPath full path of the folder right before the submissions folder
      * @param folderName name of the folder to be created
      */
@@ -63,7 +63,7 @@ public class GradingAssist {
     }
 
     /**
-     * creates the empty feedback folders
+     * <p>creates the empty feedback folders</p>
      * @param folderNameSource the file containing the names of the folders to be generated
      * @param destinationFolderPath the path of the directory that will contain the generated feedback folders
      */
@@ -75,7 +75,8 @@ public class GradingAssist {
     }
 
     /**
-     * creates a file containing the names of every single file/folder in the folder specified, in the folder specified - wrap your head around that one :D
+     * <p>creates a file containing the names of every single file/folder in the folder specified, in the folder<br>
+     * specified - wrap your head around that one :D</p>
      * @param filePath the path of the directory whose file/folder names are to be read and documented
      * @param fileName the name of the file in which names of all the files in the folder will be documented
      * @return the file containing the names of all the files in the folder, and yes, this file shall include it's own name - you needn't worry
@@ -98,7 +99,7 @@ public class GradingAssist {
     }
 
     /**
-     * interacts with you :D to get the path to a specified folder
+     * <p>interacts with you :D to get the path to a specified folder</p>
      * @param descriptor the description of the specified folder
      * @return the path of the folder you entered
      */
@@ -119,7 +120,7 @@ public class GradingAssist {
     }
 
     /**
-     * validates the folder path you entered for you :D - folder path is invalid if it contains any of the following characters:  &lt; &gt; : " / | ? *
+     * <p>validates the folder path you entered for you :D - folder path is invalid if it contains any of the following characters:  &lt; &gt; : " / | ? *</p>
      * @param folderPath the path to validate
      * @return true if path is valid, false otherwise
      */
@@ -133,7 +134,7 @@ public class GradingAssist {
     }
 
     /**
-     * fills created empty feedback folders with correctly matched files
+     * <p>fills created empty feedback folders with correctly matched files</p>
      * @param submissionsFolderPath the full path to the submissions folder including the drive label and the folder name "submissions"
      */
     public static void fillFeedbackFolders(String submissionsFolderPath) {
@@ -202,7 +203,7 @@ public class GradingAssist {
         deleteFiles(folderNamesFile, fileNamesFile);
     }
 
-    public static void deleteFiles(File folderNamesFile, File fileNamesFile) {
+    private static void deleteFiles(File folderNamesFile, File fileNamesFile) {
         try {
             FileUtils.forceDelete(folderNamesFile);
             FileUtils.forceDelete(fileNamesFile);
@@ -212,7 +213,7 @@ public class GradingAssist {
         }
     }
 
-    public static void deleteFile(File file) {
+    private static void deleteFile(File file) {
         try {
             FileUtils.forceDelete(file);
         } catch(IOException e) {
@@ -222,7 +223,7 @@ public class GradingAssist {
     }
 
     /**
-     * creates an ArrayList with all feedback folder names read from a file
+     * <p>creates an ArrayList with all feedback folder names read from a file</p>
      * @param folderNamesFile the file containing the names of all submission folders
      * @return an ArrayList containing the names of every feedback folder to be filled
      */
@@ -248,7 +249,7 @@ public class GradingAssist {
     }
 
     /**
-     * converts the feedback folder names into delimited ArrayLists for convenient matching
+     * <p>converts the feedback folder names into delimited ArrayLists for convenient matching</p>
      * @param foldersToFill the ArrayList containing the names of the feedback folders as solid Strings
      * @return an array of ArrayLists containing delimited(separated) feedback folder names
      */
@@ -271,7 +272,7 @@ public class GradingAssist {
     }
 
     /**
-     * creates an ArrayList with all feedback file names read from a file
+     * <p>creates an ArrayList with all feedback file names read from a file</p>
      * @param fileNamesFile the file containing the names of all feedback files
      * @return an ArrayList containing the names of every feedback file
      */
@@ -297,7 +298,7 @@ public class GradingAssist {
     }
 
     /**
-     * converts the feedback file names into delimited ArrayLists for convenient matching
+     * <p>converts the feedback file names into delimited ArrayLists for convenient matching</p>
      * @param filesToMove the ArrayList containing the names of the feedback files as solid Strings
      * @return an array of ArrayLists containing delimited(separated) feedback file names
      */
@@ -321,7 +322,7 @@ public class GradingAssist {
     }
 
     /**
-     * initializes the list of unmatched feedback files - this is speed
+     * <p>initializes the list of unmatched feedback files - this is speed</p>
      * @param filesMoved information on which feedback files have been matched and moved
      * @return an ArrayList containing the index numbers of every unmatched feedback file
      */
@@ -332,7 +333,7 @@ public class GradingAssist {
     }
 
     /**
-     * moves a feedback file into its corresponding feedback folder once they have been matched
+     * <p>moves a feedback file into its corresponding feedback folder once they have been matched</p>
      * @param fileName the name of the feedback file to move
      * @param folderName the name of the feedback folder to which the file will be moved
      * @param feedbackFolderPath the path of the created empty feedback folders
@@ -345,7 +346,7 @@ public class GradingAssist {
     }
 
     /**
-     * filters matches using feedback file and folder names
+     * <p>filters matches using feedback file and folder names</p>
      * @param fileNames the delimited names of all the feedback files
      * @param matches the array of currently active matches
      * @param folderName a part of the name of the folder for which matches are being found
