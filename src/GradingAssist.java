@@ -33,10 +33,8 @@ public class GradingAssist {
     /**
      * reads folder names from the submissions folder, then generates empty folders with the SAME names in a new directory - without their contained submissions files
      * @return full file path of a generated text file containing names of every folder in the submissions folder
-     * @throws IOException
-     * @throws InterruptedException
      */
-    private static String generateEmptyFolders() {
+    public static String generateEmptyFolders() {
         String filePath = null;
         filePath = getFolderPath("submissions");
 
@@ -59,7 +57,7 @@ public class GradingAssist {
      * @param folderPath full path of the folder right before the submissions folder
      * @param folderName name of the folder to be created
      */
-    private static void makeDestinationParentFolder(String folderPath, String folderName) {
+    public static void makeDestinationParentFolder(String folderPath, String folderName) {
         File destinationFolder = new File(folderPath + "\\" + folderName);
         destinationFolder.mkdir();
     }
@@ -68,9 +66,8 @@ public class GradingAssist {
      * creates the empty feedback folders
      * @param folderNameSource the file containing the names of the folders to be generated
      * @param destinationFolderPath the path of the directory that will contain the generated feedback folders
-     * @throws IOException if file unreadable or not found
      */
-    private static void makeDestinationFolders(File folderNameSource, String destinationFolderPath) {
+    public static void makeDestinationFolders(File folderNameSource, String destinationFolderPath) {
         ArrayList<String> destination_folder_names = readFolderNames(folderNameSource);
         for(int i = 0; i < destination_folder_names.size(); i++) {
             new File(destinationFolderPath + "\\" + destination_folder_names.get(i)).mkdir();
@@ -82,10 +79,8 @@ public class GradingAssist {
      * @param filePath the path of the directory whose file/folder names are to be read and documented
      * @param fileName the name of the file in which names of all the files in the folder will be documented
      * @return the file containing the names of all the files in the folder, and yes, this file shall include it's own name - you needn't worry
-     * @throws IOException if file not found, path incorrect, or missing write perms
-     * @throws InterruptedException if cmd has an issue with the command
      */
-    private static File generateFile(String filePath, String fileName) {
+    public static File generateFile(String filePath, String fileName) {
         final String COMMAND = "cd \"" + filePath + "\" && dir /B /O:G > \"" + filePath + "\\" +  fileName + "\"";
         ProcessBuilder builder = new ProcessBuilder("cmd.exe", "/c", COMMAND);
         builder.redirectErrorStream(true);
@@ -106,9 +101,8 @@ public class GradingAssist {
      * interacts with you :D to get the path to a specified folder
      * @param descriptor the description of the specified folder
      * @return the path of the folder you entered
-     * @throws IOException if there was an error reading the InputStream
      */
-    private static String getFolderPath(String descriptor) {
+    public static String getFolderPath(String descriptor) {
         String folderPath = "?";
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -125,11 +119,11 @@ public class GradingAssist {
     }
 
     /**
-     * validates the folder path you entered for you :D - folder path is invalid if it contains any of the following characters:  < > : " / | ? *
+     * validates the folder path you entered for you :D - folder path is invalid if it contains any of the following characters:  &lt; &gt; : " / | ? *
      * @param folderPath the path to validate
      * @return true if path is valid, false otherwise
      */
-    private static boolean validateFolderPath(String folderPath) {
+    public static boolean validateFolderPath(String folderPath) {
         if(folderPath == null || folderPath.length() < 5) return false;
         char[] invalidCharacters = { '<', '>', '\"', '|', '?', '*' };
         if(!(Character.isUpperCase(folderPath.charAt(0)) && folderPath.substring(1, 3).equals(":\\"))) return false;
@@ -141,10 +135,8 @@ public class GradingAssist {
     /**
      * fills created empty feedback folders with correctly matched files
      * @param submissionsFolderPath the full path to the submissions folder including the drive label and the folder name "submissions"
-     * @throws IOException
-     * @throws InterruptedException
      */
-    private static void fillFeedbackFolders(String submissionsFolderPath) {
+    public static void fillFeedbackFolders(String submissionsFolderPath) {
         String fileName = "folderNames.txt";
         File folderNamesFile = new File(submissionsFolderPath + "\\" + fileName);
 
@@ -210,7 +202,7 @@ public class GradingAssist {
         deleteFiles(folderNamesFile, fileNamesFile);
     }
 
-    private static void deleteFiles(File folderNamesFile, File fileNamesFile) {
+    public static void deleteFiles(File folderNamesFile, File fileNamesFile) {
         try {
             FileUtils.forceDelete(folderNamesFile);
             FileUtils.forceDelete(fileNamesFile);
@@ -220,7 +212,7 @@ public class GradingAssist {
         }
     }
 
-    private static void deleteFile(File file) {
+    public static void deleteFile(File file) {
         try {
             FileUtils.forceDelete(file);
         } catch(IOException e) {
@@ -233,9 +225,8 @@ public class GradingAssist {
      * creates an ArrayList with all feedback folder names read from a file
      * @param folderNamesFile the file containing the names of all submission folders
      * @return an ArrayList containing the names of every feedback folder to be filled
-     * @throws IOException if there was an error reading the file
      */
-    private static ArrayList<String> readFolderNames(File folderNamesFile) {
+    public static ArrayList<String> readFolderNames(File folderNamesFile) {
         ArrayList<String> foldersToFill = new ArrayList<>();
 
         try {
@@ -261,7 +252,7 @@ public class GradingAssist {
      * @param foldersToFill the ArrayList containing the names of the feedback folders as solid Strings
      * @return an array of ArrayLists containing delimited(separated) feedback folder names
      */
-    private static ArrayList<String>[] convertFoldersForMatching(ArrayList<String> foldersToFill) {
+    public static ArrayList<String>[] convertFoldersForMatching(ArrayList<String> foldersToFill) {
         ArrayList<String>[] folderNames = new ArrayList[foldersToFill.size()];
 
         for(int i = 0; i < folderNames.length; i++) {
@@ -283,9 +274,8 @@ public class GradingAssist {
      * creates an ArrayList with all feedback file names read from a file
      * @param fileNamesFile the file containing the names of all feedback files
      * @return an ArrayList containing the names of every feedback file
-     * @throws IOException if there was an error reading the file
      */
-    private static ArrayList<String> readFileNames(File fileNamesFile) {
+    public static ArrayList<String> readFileNames(File fileNamesFile) {
         ArrayList<String> filesToMove = new ArrayList<>();
 
         try {
@@ -311,7 +301,7 @@ public class GradingAssist {
      * @param filesToMove the ArrayList containing the names of the feedback files as solid Strings
      * @return an array of ArrayLists containing delimited(separated) feedback file names
      */
-    private static ArrayList<String>[] convertFilesForMatching(ArrayList<String> filesToMove) {
+    public static ArrayList<String>[] convertFilesForMatching(ArrayList<String> filesToMove) {
         ArrayList<String>[] fileNames = new ArrayList[filesToMove.size()];
 
         for(int i = 0; i < fileNames.length; i++) {
@@ -335,7 +325,7 @@ public class GradingAssist {
      * @param filesMoved information on which feedback files have been matched and moved
      * @return an ArrayList containing the index numbers of every unmatched feedback file
      */
-    private static ArrayList<Integer> initializeMatches(boolean[] filesMoved) {
+    public static ArrayList<Integer> initializeMatches(boolean[] filesMoved) {
         ArrayList<Integer> initializedMatches = new ArrayList<Integer>(filesMoved.length);
         for(int i = 0; i < filesMoved.length; i++) if(!filesMoved[i]) initializedMatches.add(i);
         return initializedMatches;
@@ -348,7 +338,7 @@ public class GradingAssist {
      * @param feedbackFolderPath the path of the created empty feedback folders
      * @param submissionsFolderPath the path of the original submissions folder
      */
-    private static void moveFile(String fileName, String folderName, String feedbackFolderPath, String submissionsFolderPath) {
+    public static void moveFile(String fileName, String folderName, String feedbackFolderPath, String submissionsFolderPath) {
         File feedbackFile = new File(feedbackFolderPath + "\\" + fileName);
         final String DESTINATION_PARENT_FOLDER_PATH = submissionsFolderPath.substring(0, submissionsFolderPath.lastIndexOf('\\')) + "\\Feedback Folders\\";
         feedbackFile.renameTo(new File(DESTINATION_PARENT_FOLDER_PATH + folderName + "\\" + fileName));
@@ -361,7 +351,7 @@ public class GradingAssist {
      * @param folderName a part of the name of the folder for which matches are being found
      * @return the list of corresponding matches
      */
-    private static ArrayList<Integer> filter(ArrayList<String>[] fileNames, ArrayList<Integer> matches, String folderName) {
+    public static ArrayList<Integer> filter(ArrayList<String>[] fileNames, ArrayList<Integer> matches, String folderName) {
         for(int i = 0; i < matches.size(); i++) {
             int indexToCheck = matches.get(i);
 
